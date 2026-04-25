@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  # FastAPI backend
+  api:
+    build: .
+    container_name: sentiment-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount model files (not baked into image — too large)
+      - ./models:/app/models
+    environment:
+      - MODEL_PATH=models/bert-sentiment
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - MAX_TEXT_LENGTH=256
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Streamlit frontend
+  streamlit:
+    build: .
+    container_name: sentiment-demo
+    command: streamlit run app/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./models:/app/models
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
