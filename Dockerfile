@@ -21,7 +21,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY api/ ./api/
 COPY app/ ./app/
 COPY src/ ./src/
-COPY .env .
 
 # Create directory for model (will be mounted as volume)
 RUN mkdir -p models/bert-sentiment
